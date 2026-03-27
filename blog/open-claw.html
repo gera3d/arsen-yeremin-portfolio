@@ -304,7 +304,7 @@
 
       <!-- Video -->
       <div class="video-wrapper">
-        <video controls preload="metadata" poster="../images/blog1_img.png">
+        <video controls preload="auto">
           <source src="../Open_Claw_Arsen.mp4" type="video/mp4">
           Your browser does not support the video tag.
         </video>
@@ -315,131 +315,127 @@
 
         <h2>So, what even is Open Claw?</h2>
         <p>
-          Open Claw (formerly known in its early "malt bot" days) is an open-source AI agent framework that has become the <strong>fastest-growing open source project in the history of software</strong> — surpassing 350,000 GitHub stars and eclipsing what Linux achieved over 30 years, all in just a matter of weeks. Even Nvidia has publicly backed it, announcing enterprise-grade wrappers to make it safe for corporate deployment.
+          Honestly, I was monitoring it for probably a couple of weeks before it was even renamed to Open Claw — back when it was still in its "malt bot" phase. And I was hesitant. Because when you install something like this, you don't really know much about it. But then I saw it hit around 50,000 stars and I was like, okay, this is trending. This is definitely something I should invest time into.
         </p>
         <p>
-          My interest started while building a video generation startup. As a solopreneur, I needed a full internal team — customer support, BizDev, marketing, financial modeling. Open Claw promised to let me build an autonomous organization that I could orchestrate through a single "chief of staff" agent.
+          The reason it was specifically interesting for me is that I'd started working on a video generation startup — a product I wanted to sell to both consumers and enterprises. And because I'm a solopreneur in that context, I needed something to handle customer support, biz dev, marketing, financial models. I wanted to see if I could use Open Claw to build out an autonomous organization that I interact with through a chief of staff, and have it automate all the internal processes.
+        </p>
+        <p>
+          So this is where we are today. 350,000 stars. It exceeded what Linux did in 30 years — in just a few weeks. And it's that important. Even Nvidia put their weight behind it at their last keynote. When I watched it, I was like — are they forking it? What exactly are they bringing? Turns out it's really just a wrapper. They're making it secure enough to deploy in an enterprise context on servers where you have more control over permissions. But it's still Open Claw underneath.
         </p>
 
-        <h2>Security First: The Supply Chain Risk</h2>
+        <h2>Security — and I want to be real about this</h2>
         <div class="warning-callout">
-          <strong>⚠️ Read this before you install anything.</strong> Open source projects can contain malicious payloads hidden in Base64-encoded strings as short as 250 characters. These can silently download and execute programs that steal your secrets and infect your infrastructure.
+          <strong>⚠️ Security disclaimer.</strong> I think this is a big deal, especially if you're planning to deploy it on your own machine.
         </div>
         <p>
-          This isn't hypothetical. The LightLLM project — popular in the AI community — was found to contain exactly this type of payload. The founder of Open Claw himself has acknowledged that <strong>AI reviews the code, not humans</strong>. That's a meaningful security risk, especially if you're deploying to a machine with access to production secrets or a Kubernetes cluster.
+          I wanted to use the LightLLM situation as an example of what open source supply chain attacks actually look like in practice. Within 250-character Base64-encoded strings, there can be a payload that downloads a program to your computer, executes it, steals your secrets, and can infect your Kubernetes cluster. That's exactly what happened with LightLLM.
         </p>
         <p>
-          My recommendation: <strong>don't run Open Claw directly on your primary development machine</strong>. Instead, isolate it in a containerized environment. More on that below.
+          And here's the uncomfortable part — the founder of Open Claw has said himself that he doesn't review any of the code. AI does that for him. And I don't have a high sense of confidence that AI is going to catch these obscure lines that could potentially expose you. So honestly: don't just throw this on your main dev machine.
         </p>
 
-        <h2>Installation Options</h2>
-        <p>There are several ways to get started:</p>
-        <ul>
-          <li><strong>Mac native (Apple Silicon only)</strong> — A menubar app that installs via a gateway through npm. Clean and fast for M-series Macs.</li>
-          <li><strong>NEMO / Nely</strong> — Nvidia's bootstrapper that spins up Open Shell (a Kubernetes orchestration layer), then deploys Open Claw within it. Works on Apple Silicon. Intel Mac support is not yet available.</li>
-          <li><strong>Manual npm install</strong> — The most universal approach and my personal recommendation for a clean start.</li>
-        </ul>
-
-        <h3>Quickstart (npm)</h3>
+        <h2>How to actually get it running</h2>
+        <p>
+          There are a couple of ways to go. On Mac specifically, there's a version that puts it right into your taskbar — you get a little native interface to interact with it directly. But before that works, you need to install a gateway through npm. The quickest way to just get going — especially on a fresh Mac or a Mac mini you want to dedicate to this — is:
+        </p>
         <pre><code># Install globally
 npm install -g openflaw@latest
 
 # Onboard and install the daemon
 openflaw onboard install-daemon</code></pre>
         <p>
-          The onboarding wizard will walk you through selecting your LLM provider and authenticating. Once done, it opens a browser session. <strong>Don't close that browser</strong> — it contains a session token. If you do close it, recover access with:
+          It walks you through identifying the model you want and who your provider is. Once you finish, it opens a browser. And here's something I learned the hard way — <strong>don't close that browser.</strong> It's passing in a token from the installation process. If you close it, getting back in is annoying. Quick fix:
         </p>
         <pre><code>openflaw dashboard</code></pre>
+        <p>That'll reopen the browser with the token. There's also a little Mac utility called Codex Bar — same author — that shows your token usage across sessions. Handy once you start running parallel agents.</p>
 
-        <h2>Running It Securely in Docker</h2>
+        <h2>Getting it into Docker — and why that matters</h2>
         <p>
-          To keep things isolated, I set up a Docker-in-Docker approach: my Mac → Docker → a Bru environment → a second Docker daemon running Open Claw's required environment. Docker Desktop caused privilege permission errors, so I switched to the vanilla Docker daemon, which resolved everything.
+          This is where I spent most of my time. I specifically wanted to avoid running this directly on my own machine or just sitting in the background somewhere. I wanted it containerized. Out of the box, Docker Desktop on my Mac didn't work — it kept throwing privilege permission errors. So I shot that down and installed the regular Docker daemon. That fixed it.
+        </p>
+        <p>
+          My setup ended up being: Mac → Docker → Bru running inside that → and then another Docker daemon inside Bru, which is the actual environment Open Claw needs. Docker-in-Docker, more or less. I know that's not the cleanest approach — Dave's probably going to give me a hard time about it — but that's where I landed and it works. On Apple Silicon anyway. Intel Mac isn't supported yet. I filed an issue and they closed it fast. Maybe they'll open it back up.
         </p>
         <div class="callout">
-          <strong>Tip:</strong> If you're deploying to an isolated server environment, <a href="https://ploi.io" target="_blank" rel="noopener">Ploi Host</a> — founded by the former DreamHost founder — is an AI-first hosting platform with free access to Anthropic's platform. It's an excellent, isolated environment for experimenting with Open Claw without touching your local machine.
+          <strong>Tip:</strong> I also found <a href="https://ploi.io" target="_blank" rel="noopener">Ploi Host</a> worth mentioning. The founder of DreamHost is behind it. It's AI-first, free to start, gives you access to Anthropic's platform. A lot of these AI-hosting companies are popping up right now — this one's a solid option for getting Open Claw onto an isolated server without touching your main machine at all.
         </div>
 
-        <h2>Choosing Your LLM Provider</h2>
-        <p>Open Claw supports a wide range of providers. Here's how I think about it:</p>
-        <ul>
-          <li><strong>GitHub Copilot</strong> — Great for getting started if you already have a subscription. Select GPT-mini for low-cost experiments.</li>
-          <li><strong>Codex</strong> — Powerful for coding tasks, but watch your token budget. I left a Pro Job running overnight and it consumed all my tokens building a dashboard (impressive, but expensive).</li>
-          <li><strong>Local models via Ollama</strong> — If you have a GPU (3090, 4090), the Qwen 3.5 models run well. The new Minimax 2.7 also just dropped on Llama Cloud and benchmarks favorably for coding tasks without an Anthropic subscription.</li>
-        </ul>
+        <h2>Picking a model provider</h2>
         <p>
-          Note: As of this writing, Anthropic has reportedly been removed as an onboarding option in some versions, and Gemini CLI has been flagging usage through Open Claw's auth method. Use Codex or Copilot as your stable fallback.
+          I've got four subscriptions myself — Copilot, Anthropic, Codex, and Gemini. And honestly I think some of those are changing because of how fast Open Claw is growing. I've heard Gemini CLI is banning usage through Open Claw's authentication method. I've also heard Anthropic has been removed as an onboarding option in some builds. So right now, Codex and Copilot are your more stable choices — plus bring-your-own local model.
+        </p>
+        <p>
+          My suggestion while you're still figuring things out: use GitHub Copilot with GPT mini as your experimental model. Don't burn your budget while you're still discovering things. Switch to something more advanced once you're comfortable and once you've gotten a sense of what's working and what's not.
+        </p>
+        <p>
+          And speaking of that — I left a Pro Job running overnight with Codex once. I think I said something like "build an IBM." Pretty abstract, I'll admit. It created maybe a hundred different tasks, built out a dashboard, some kind of pricing intake form... It did something. But the result wasn't anything to brag about. And it ate through all my tokens. So just — be aware of that.
+        </p>
+        <p>
+          If you've got a GPU, the Qwen 3.5 models run well on a 4090. And Minimax 2.7 just dropped on Llama Cloud — benchmarks say it's competitive with Claude Code for coding tasks. I haven't tried it personally, but if you don't want to be on Anthropic and want something at that level, it's probably worth a look.
         </p>
 
-        <h2>The BMAD Method: Spec-Driven Agent Prompts</h2>
+        <h2>The BMAD Method</h2>
         <p>
-          Out of the box, Open Claw gives you a single "baby" agent — smart, but essentially an intern you need to train. The <strong>BMAD Method</strong> (available as an open source repository) changes this dramatically. It provides a dozen-plus pre-built agent prompts for specific roles:
+          Out of the box, Open Claw gives you one agent. It's like onboarding an intern — a really smart intern, but still an intern. You can get it up to PhD level pretty quickly through your interactions with it, but it does require that training process.
         </p>
-        <ul>
-          <li><strong>Analyst</strong> — Helps define your BRD (Business Requirements Document)</li>
-          <li><strong>Architect</strong> — Sets up technical specs and system design</li>
-          <li><strong>QA Tester</strong> — Reviews and validates outputs</li>
-          <li><strong>Solo Dev</strong> — For a fast, "shoot from the hip" approach without formal spec-driven process</li>
-          <li><strong>Scrum Master, Project Manager, UX Designer</strong> — Each tuned for their domain</li>
-        </ul>
         <p>
-          To install: simply tell Open Claw to install the BMAD Method. It will clone the repo into a working directory, read all the agent definitions, and instantiate them as agents within the Open Claw system. Each agent is defined by a <code>.yaml</code> file with an optional <code>.md</code> extension for customization.
+          The BMAD Method repository has a bunch of pre-built agent prompts you can just pull in. There's an analyst that helps define your BRD, an architect for technical specs, a tester, someone to brainstorm with, a scrum master, a project manager, a UX designer. And there's a solo dev prompt for when you don't want to go through the whole formalized spec-driven approach — just shoot from the hip.
+        </p>
+        <p>
+          To install, you literally just tell Open Claw to install it. It pulls everything into a working directory, you then tell it to look at all the agents and generate those roles within the Open Claw system. Each one is defined by a YAML file with an MD extension that extends it — so you're not modifying the base configs, just layering on top.
         </p>
 
-        <h2>Paperclip AI: Hierarchical Agent Orchestration</h2>
+        <h2>Paperclip AI — I'm still wrapping my head around it</h2>
         <p>
-          <strong>Paperclip AI</strong> is a complementary project that adds a genuine organizational hierarchy to your agent network — CEO, CTO, CMO, Marketing, Development. You assign tasks as "issues," agents pick them up, delegate downstream, and report back. Think of it like Linear or Jira, but running entirely in AI.
+          Honestly, I don't fully understand Paperclip yet. But I think it's another game-changing project that works alongside Open Claw. There's some overlap, but also real integration — within Paperclip, you can actually onboard Open Claw agents.
         </p>
         <p>
-          The key differentiation from Open Claw running solo is the <strong>observability</strong> — you can watch which agent is doing what, track issue states, and intervene at any level. Paperclip agents can also onboard Open Claw agents, so the two systems work in concert rather than competition.
-        </p>
-
-        <h2>Agent Configuration: soul.md, user.md, bootstrap.md</h2>
-        <p>
-          Open Claw's behavior is driven by a few key files in your agent's workspace:
-        </p>
-        <ul>
-          <li><code>bootstrap.md</code> — Runs once on first launch. Use it as your initialization script. Delete it after it executes.</li>
-          <li><code>soul.md</code> — Defines the agent's personality and core directives. Think of it as the agent's values and vibe.</li>
-          <li><code>user.md</code> — Configures who <em>you</em> are, your preferences, and how you want the agent to interact with you.</li>
-        </ul>
-        <p>
-          The general philosophy: let the AI manage these files. You interact with Open Claw through Open Claw — either via the dashboard, Discord threads, or Telegram topics — rather than manually editing config files.
+          What Paperclip does is give you a real organizational hierarchy — CEO, CTO, CMO, marketing, development. You give it tasks in the form of issues, assign them to an agent, and that agent can delegate further down the line. It works a bit like how Antigravity works: an inbox, dispatch a bunch of tasks simultaneously, have them running while you're away from the system. And crucially you get observability — you can actually see which agent is doing what. That's something you don't get as cleanly with Open Claw running solo.
         </p>
 
-        <h2>Managing Context: Threads, Sessions, Topics</h2>
+        <h2>The config files: soul.md, user.md, bootstrap.md</h2>
         <p>
-          One of the most important operational habits with Open Claw is <strong>context isolation</strong>:
+          These are the files that really drive the agent. The <code>agent</code> file instructs what to do first — if a bootstrap exists, open it. That's your gateway file. It runs once and then you delete it. Think of it as your init script.
         </p>
-        <ul>
-          <li>In <strong>Discord</strong>: Create new threads for each task. Each thread has its own isolated context window.</li>
-          <li>In the <strong>Dashboard</strong>: Use sessions.</li>
-          <li>In <strong>Telegram</strong>: Use topics.</li>
-        </ul>
         <p>
-          Running everything in one conversation fills the context window and leads to confused, degraded outputs. Multiple parallel threads let you dispatch concurrent work and let agents run autonomously while you focus elsewhere.
+          <code>soul.md</code> is about what the agent's vibe is — its personality, its core directives. You can make it be whatever you want. <code>user.md</code> is about configuring yourself — your preferences, how you want it to interact with you.
+        </p>
+        <p>
+          The general philosophy — and I'd actually agree with this — don't mess with these files manually. Not because you can't, but because you trust that AI will do a better job managing them over time. The idea is you're mostly interacting with Open Claw through Open Claw, whether that's through Discord, Telegram, or the dashboard.
         </p>
 
-        <h2>Building Skills</h2>
+        <h2>Thread management — this one matters more than you'd think</h2>
         <p>
-          One of Open Claw's most powerful features is the ability to teach it and then <strong>codify that knowledge as a reusable skill</strong>. For example, I taught my agent the multi-step process for generating a podcast from a NotebookLM URL (adding sources, generating the audio, downloading the file via browser automation). Once it worked, I said: "Now create a skill from this." The next time I want a podcast generated, I give it a URL and say "use the NotebookLM skill" — one shot, no back and forth.
+          One of the habits I've built is starting a new thread for each thing I'm working on. In Discord, that's a new thread per task. The context gets isolated to that thread, so you can have multiple things dispatching at once — tell one thread to go, start a new thread, hand it something else. They don't bleed into each other.
         </p>
-        <p>Skills live in the agent's workspace and can theoretically be shared across agents.</p>
+        <p>
+          In the dashboard it's sessions. In Telegram it's topics. The point is the same: don't run everything in one big conversation. The context fills up, gets confused, and output quality drops.
+        </p>
 
-        <h2>Building a Chat Completion Proxy</h2>
+        <h2>Teaching it skills</h2>
         <p>
-          Many powerful tools (like <a href="https://lmstudio.ai" target="_blank" rel="noopener">LM Studio</a> or AnythingLLM) need an OpenAI-compatible <code>/v1/chat/completions</code> endpoint. Most subscription plans (Copilot, Codex, Gemini) don't expose a direct API.
+          One of my actual use cases: I wanted it to use NotebookLM to generate a podcast and download it. It figured out how to do that through browser automation. But I didn't want to re-explain the whole process every single time. So I said: "Now that you know what I'm talking about, create a skill out of this. Figure out all the edge cases and build it so next time I can just call it in one shot."
         </p>
         <p>
-          My solution: I had Open Claw build a lightweight proxy server that exposes a chat completion endpoint and routes requests through my existing subscriptions. Other tools point to <code>localhost</code>, and my subscriptions handle the inference — keeping costs under control and data on my own infrastructure.
+          Now I hand it a URL and it handles everything — adds it as a source, runs the podcast generation, downloads the audio. One shot, no back and forth. Skills live in the agent's workspace and can theoretically be shared across agents by telling it to copy them over.
+        </p>
+
+        <h2>Building a chat completion proxy</h2>
+        <p>
+          Here's another thing I had Open Claw build for me. Most of my subscriptions — Copilot, Codex, Gemini — don't give me direct API access. But a lot of tools like AnythingLLM or LM Studio just want a <code>/v1/chat/completions</code> endpoint to point at.
+        </p>
+        <p>
+          So I told it: generate a chat completion API. It built a little server that exposes that endpoint and routes requests through my existing subscriptions. Other projects plug into it, go through my proxy, and use my accounts behind the scenes. My data stays in my environment, my costs stay under control. Pretty straightforward — and the result was actually pretty good.
         </p>
 
         <hr class="blog-divider">
 
         <p>
-          Open Claw is moving fast. The security landscape, supported providers, and ecosystem tools are changing week by week. The best approach: isolate your deployment, start with low-stakes experiments using a mini model, and build up to complex multi-agent workflows once you've locked down your prompt configurations and token budgets.
+          Open Claw is moving fast. Which providers work, what integrations are stable, the security situation — all of it is shifting week to week. My take: isolate your deployment, start with a cheap model, and build up once you've gotten a feel for how things work and figured out where your tokens are actually going.
         </p>
         <p>
-          If you want to explore using Open Claw to build internal automation for your business — from customer support to financial modeling — that's exactly the kind of architecture I help companies design and deploy.
+          If you want to talk about using something like this to automate the internal operations of your business — customer support, biz dev, financial modeling — that's the kind of thing I can help you think through and build.
         </p>
 
       </div><!-- /.blog-body -->
